@@ -1,0 +1,11 @@
+# Archivos de configuración de Visual Studio
+.vs/
+*.vscode/
+
+# Archivos de compilación y temporales
+bin/
+obj/
+
+# Archivos relacionados con el sistema
+*.log
+*.vsidx
