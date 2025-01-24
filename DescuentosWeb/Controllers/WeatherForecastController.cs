@@ -15,8 +15,8 @@ namespace DescuentosWeb.Controllers
         public async Task<IActionResult> GetDiscountedProducts()
         {
             var products = new List<Product>();
-            int maxPages = 70; 
-            int startPage = 51;
+            int maxPages = 100; 
+            int startPage = 1;
 
             try
             {
@@ -32,7 +32,7 @@ namespace DescuentosWeb.Controllers
 
                         try
                         {
-                            string url = $"https://www.falabella.com.pe/falabella-pe/search?Ntt=mujer&sortBy=derived.price.search%2Casc&facetSelected=true&f.derived.variant.sellerId=FALABELLA&page={currentPage}";
+                            string url = $"https://www.falabella.com.pe/falabella-pe/search?Ntt=falabella&sortBy=derived.price.search%2Casc&f.derived.variant.sellerId=FALABELLA&facetSelected=true&page={currentPage}";
                             Console.WriteLine($"Procesando página {currentPage}: {url}");
 
                             await page.GotoAsync(url);
