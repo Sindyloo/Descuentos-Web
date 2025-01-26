@@ -1,9 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Playwright;
-using System.Threading.Tasks;
 using System.Collections.Generic;
-using System.Linq;
+using System.Threading.Tasks;
 using System;
+using System.Linq;
 
 namespace DescuentosWeb.Controllers
 {
@@ -15,79 +15,66 @@ namespace DescuentosWeb.Controllers
         public async Task<IActionResult> GetDiscountedProducts()
         {
             var products = new List<Product>();
-            int maxPages = 100; 
-            int startPage = 1;
+            int maxPages = 100;
 
             try
             {
+                // Inicializa Playwright y abre un navegador
                 using (var playwright = await Playwright.CreateAsync())
                 {
                     var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true });
+                    var page = await browser.NewPageAsync();
 
-                    // Lista de tareas para procesar páginas en paralelo
-                    var tasks = Enumerable.Range(startPage, maxPages - startPage + 1).Select(async currentPage =>
+                    for (int currentPage = 1; currentPage <= maxPages; currentPage++)
                     {
-                        var pageProducts = new List<Product>();
-                        var page = await browser.NewPageAsync();
+                        // Construir la URL con la página actual
+                        string url = $"https://www.falabella.com.pe/falabella-pe/search?Ntt=mujer&f.derived.variant.sellerId=FALABELLA&facetSelected=true&sortBy=derived.price.search%2Casc&page={currentPage}";
+                        Console.WriteLine($"Procesando página {currentPage}: {url}");
 
-                        try
+                        // Navega a la URL de los productos
+                        await page.GotoAsync(url);
+
+                        // Espera a que la página cargue los productos
+                        await page.WaitForSelectorAsync("#testId-searchResults-products");
+
+                        // Obtiene los productos después de que carguen
+                        var productNodes = await page.QuerySelectorAllAsync("#testId-searchResults-products .grid-pod");
+
+                        foreach (var productNode in productNodes)
                         {
-                            string url = $"https://www.falabella.com.pe/falabella-pe/search?Ntt=falabella&sortBy=derived.price.search%2Casc&f.derived.variant.sellerId=FALABELLA&facetSelected=true&page={currentPage}";
-                            Console.WriteLine($"Procesando página {currentPage}: {url}");
-
-                            await page.GotoAsync(url);
-                            await page.WaitForSelectorAsync("#testId-searchResults-products");
-
-                            var productNodes = await page.QuerySelectorAllAsync("#testId-searchResults-products .grid-pod");
-
-                            foreach (var productNode in productNodes)
+                            var discountNode = await productNode.QuerySelectorAsync(".discount-badge-item");
+                            if (discountNode != null)
                             {
-                                var discountNode = await productNode.QuerySelectorAsync(".discount-badge-item");
-                                if (discountNode != null)
+                                var discountText = await discountNode.InnerTextAsync();
+                                if (decimal.TryParse(discountText.Replace("%", "").Replace("-", ""), out decimal discountPercentage) && discountPercentage > 60)
                                 {
-                                    var discountText = await discountNode.InnerTextAsync();
-                                    if (decimal.TryParse(discountText.Replace("%", "").Replace("-", ""), out decimal discountPercentage) && discountPercentage > 70)
-                                    {
-                                        var nameNode = await productNode.QuerySelectorAsync(".pod-subTitle");
-                                        var brandNode = await productNode.QuerySelectorAsync(".pod-title");
-                                        var discountedPriceNode = await productNode.QuerySelectorAsync(".copy10");
-                                        var linkNode = await productNode.QuerySelectorAsync("a.pod-link");
-                                        var productUrl = await linkNode.GetAttributeAsync("href");
+                                    var nameNode = await productNode.QuerySelectorAsync(".pod-subTitle");
+                                    var brandNode = await productNode.QuerySelectorAsync(".pod-title");
+                                    var discountedPriceNode = await productNode.QuerySelectorAsync(".copy10");
+                                    var linkNode = await productNode.QuerySelectorAsync("a.pod-link");
+                                    var productUrl = await linkNode.GetAttributeAsync("href");
 
-                                        pageProducts.Add(new Product
-                                        {
-                                            Name = await nameNode.InnerTextAsync(),
-                                            Brand = brandNode != null ? await brandNode.InnerTextAsync() : "Sin marca",
-                                            DiscountedPrice = discountedPriceNode != null ? await discountedPriceNode.InnerTextAsync() : "Precio no disponible",
-                                            Discount = discountText,
-                                            Link = productUrl
-                                        });
-                                    }
+                                    products.Add(new Product
+                                    {
+                                        Name = await nameNode.InnerTextAsync(),
+                                        Brand = brandNode != null ? await brandNode.InnerTextAsync() : "Sin marca",
+                                        DiscountedPrice = discountedPriceNode != null ? await discountedPriceNode.InnerTextAsync() : "Precio no disponible",
+                                        Discount = discountText,
+                                        DiscountPercentage = discountPercentage,
+                                        Link = productUrl
+                                    });
                                 }
                             }
                         }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine($"Error procesando página {currentPage}: {ex.Message}");
-                        }
-                        finally
-                        {
-                            await page.CloseAsync();
-                        }
-
-                        return pageProducts;
-                    });
-
-                    // Ejecutar todas las tareas en paralelo
-                    var results = await Task.WhenAll(tasks);
-
-                    // Combinar resultados
-                    products = results.SelectMany(p => p).ToList();
+                    }
 
                     await browser.CloseAsync();
                 }
 
-                return Ok(products);
+                // Ordenar los productos por el porcentaje de descuento de mayor a menor
+                var sortedProducts = products.OrderByDescending(p => p.DiscountPercentage).ToList();
+
+                return Ok(sortedProducts);
             }
             catch (Exception ex)
             {
@@ -103,6 +90,7 @@ namespace DescuentosWeb.Controllers
         public string Brand { get; set; }
         public string DiscountedPrice { get; set; }
         public string Discount { get; set; }
+        public decimal DiscountPercentage { get; set; } // Nuevo campo para almacenar el porcentaje
         public string Link { get; set; }
     }
 }
