@@ -1,0 +1,5 @@
+[build]
+  build_command = "./install.sh && dotnet publish -c Release -o out"
+
+[run]
+  start_command = "dotnet out/DescuentosWeb.dll"
