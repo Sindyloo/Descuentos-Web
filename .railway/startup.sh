@@ -1,4 +1,6 @@
 #!/bin/bash
-curl -fsSL https://deb.nodesource.com/setup_16.x | bash -  # Instala Node.js
-apt-get install -y nodejs  # Instala npm
-npx playwright install --with-deps  # Instala Playwright
+# Instalar Node.js
+curl -fsSL https://deb.nodesource.com/setup_16.x | bash -
+apt-get install -y nodejs
+# Instalar Playwright
+npx playwright install --with-deps
