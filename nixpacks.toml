@@ -1,5 +1,5 @@
-[build]
-  build_command = "./install.sh && dotnet publish -c Release -o out"
+[phases.setup]
+nixPkgs = ["playwright", "chromium"]
 
-[run]
-  start_command = "dotnet out/DescuentosWeb.dll"
+[phases.build]
+cmds = ["playwright install --with-deps"]
