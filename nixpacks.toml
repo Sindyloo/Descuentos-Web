@@ -1,5 +1,1 @@
-[phases.setup]
-nixPkgs = ["playwright", "chromium"]
 
-[phases.build]
-cmds = ["playwright install --with-deps"]
