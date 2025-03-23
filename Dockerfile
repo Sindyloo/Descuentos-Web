@@ -12,19 +12,17 @@ WORKDIR /src
 COPY ["DescuentosWeb/DescuentosWeb.csproj", "DescuentosWeb/"]
 RUN dotnet restore "DescuentosWeb/DescuentosWeb.csproj"
 
-# Copia el resto del código y compílalo
+# Copia el resto del código y compílalo en pasos separados (ahorra memoria)
 COPY . . 
 WORKDIR "/src/DescuentosWeb"
-RUN dotnet build "DescuentosWeb.csproj" -c Release -o /app/build
+RUN dotnet build "DescuentosWeb.csproj" -c Release -o /app/build --no-restore
+RUN dotnet publish "DescuentosWeb.csproj" -c Release -o /app/publish --no-restore
 
-# Publica la aplicación
-RUN dotnet publish "DescuentosWeb.csproj" -c Release -o /app/publish
-
-# 3️⃣ Imagen final con Playwright correctamente instalado
+# 3️⃣ Imagen final con Playwright y dependencias
 FROM base AS final
 WORKDIR /app
 
-# 🔹 Instalar dependencias necesarias para Playwright
+# 🔹 Instalar solo las dependencias necesarias
 RUN apt-get update && apt-get install -y \
     wget curl ca-certificates \
     libglib2.0-0 libnss3 libgdk-pixbuf2.0-0 \
@@ -32,10 +30,12 @@ RUN apt-get update && apt-get install -y \
     libxcb-dri3-0 libxss1 libasound2 libxtst6 \
     && rm -rf /var/lib/apt/lists/*
 
-# 🔹 Instalar Playwright desde la CLI oficial de .NET
-RUN dotnet tool install --global Microsoft.Playwright.CLI && playwright install-deps && playwright install
+# 🔹 Instalar Playwright correctamente (en Railway)
+RUN dotnet tool install --tool-path /tools Microsoft.Playwright.CLI
+ENV PATH="/tools:$PATH"
+RUN playwright install-deps && playwright install
 
-# 🔹 Copiamos los archivos compilados de la imagen de construcción
+# 🔹 Copiamos los archivos compilados
 COPY --from=build /app/publish .
 
 # 🔹 Configurar el punto de entrada
