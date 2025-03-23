@@ -22,21 +22,17 @@ RUN dotnet publish "DescuentosWeb.csproj" -c Release -o /app/publish --no-restor
 FROM base AS final
 WORKDIR /app
 
-# 🔹 Instalar solo las dependencias necesarias
+# 🔹 Instalar Node.js, npm y dependencias de Playwright
 RUN apt-get update && apt-get install -y \
     wget curl ca-certificates \
     libglib2.0-0 libnss3 libgdk-pixbuf2.0-0 \
     libx11-xcb1 libatk-bridge2.0-0 libatk1.0-0 \
     libxcb-dri3-0 libxss1 libasound2 libxtst6 \
+    nodejs npm \
     && rm -rf /var/lib/apt/lists/*
 
-# 🔹 Instalar Playwright correctamente (en Railway)
-RUN dotnet tool install --tool-path /tools Microsoft.Playwright.CLI
-ENV PATH="/tools:$PATH"
-RUN playwright install-deps && playwright install
+# 🔹 Instalar Playwright con npm (NO con dotnet)
+RUN npm install -g playwright && playwright install-deps && playwright install
 
 # 🔹 Copiamos los archivos compilados
-COPY --from=build /app/publish .
-
-# 🔹 Configurar el punto de entrada
-ENTRYPOINT ["dotnet", "DescuentosWeb.dll"]
+COPY --from=build /
