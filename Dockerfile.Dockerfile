@@ -1,13 +1,14 @@
-# Utiliza una imagen base de .NET para la construcción
+# 1️⃣ Imagen base para la ejecución
 FROM mcr.microsoft.com/dotnet/aspnet:7.0 AS base
 WORKDIR /app
 EXPOSE 80
+EXPOSE 443
 
-# Usamos la imagen de SDK de .NET para compilar la aplicación
+# 2️⃣ Imagen de construcción con SDK de .NET
 FROM mcr.microsoft.com/dotnet/sdk:7.0 AS build
 WORKDIR /src
 
-# Copia el archivo csproj y restaura las dependencias
+# Copia y restaura dependencias
 COPY ["DescuentosWeb/DescuentosWeb.csproj", "DescuentosWeb/"]
 RUN dotnet restore "DescuentosWeb/DescuentosWeb.csproj"
 
@@ -19,34 +20,24 @@ RUN dotnet build "DescuentosWeb.csproj" -c Release -o /app/build
 # Publica la aplicación
 RUN dotnet publish "DescuentosWeb.csproj" -c Release -o /app/publish
 
-# Instalar las dependencias necesarias para Playwright
+# 3️⃣ Imagen final con dependencias de Playwright
 FROM base AS final
 WORKDIR /app
 
-# Instalar las dependencias necesarias para Playwright
+# Instalamos Node.js, npm y las dependencias necesarias para Playwright
 RUN apt-get update && apt-get install -y \
-    wget \
-    curl \
-    ca-certificates \
-    libglib2.0-0 \
-    libnss3 \
-    libgdk-pixbuf2.0-0 \
-    libx11-xcb1 \
-    libatk-bridge2.0-0 \
-    libatk1.0-0 \
-    libxcb-dri3-0 \
-    libxss1 \
-    libgdk-pixbuf2.0-0 \
-    libasound2 \
-    libnss3 \
-    libxtst6 \
+    wget curl ca-certificates \
+    libglib2.0-0 libnss3 libgdk-pixbuf2.0-0 \
+    libx11-xcb1 libatk-bridge2.0-0 libatk1.0-0 \
+    libxcb-dri3-0 libxss1 libasound2 libxtst6 \
+    nodejs npm \
     && rm -rf /var/lib/apt/lists/*
 
-# Instalar Playwright
-RUN npm install -g playwright && npx playwright install
+# Instalamos Playwright y sus navegadores con todas las dependencias necesarias
+RUN npm install -g playwright && npx playwright install --with-deps
 
-# Copiar los archivos compilados a la imagen final
+# Copiamos los archivos compilados de la imagen de construcción
 COPY --from=build /app/publish .
 
-# Configura el entorno de ejecución y expone el puerto
-ENTRYPOINT ["dotnet", "DescuentosWeb.dll"]
+# Configuramos el CMD para Railway
+CMD ["dotnet", "DescuentosWeb.dll"]
