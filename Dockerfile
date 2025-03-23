@@ -15,24 +15,24 @@ RUN dotnet restore "DescuentosWeb/DescuentosWeb.csproj"
 # Copia el resto del código y compílalo en pasos separados (ahorra memoria)
 COPY . . 
 WORKDIR "/src/DescuentosWeb"
-RUN dotnet build "DescuentosWeb.csproj" -c Release -o /app/build --no-restore
-RUN dotnet publish "DescuentosWeb.csproj" -c Release -o /app/publish --no-restore
+
+# 🔹 Optimización para evitar consumo alto de memoria en Railway
+RUN dotnet publish "DescuentosWeb.csproj" -c Release -o /app/publish --no-restore -p:UseSharedCompilation=false -p:ConcurrentBuild=false
 
 # 3️⃣ Imagen final con Playwright y dependencias
 FROM base AS final
 WORKDIR /app
 
-# 🔹 Instalar Node.js, npm y dependencias de Playwright
-RUN apt-get update && apt-get install -y \
-    wget curl ca-certificates \
-    libglib2.0-0 libnss3 libgdk-pixbuf2.0-0 \
-    libx11-xcb1 libatk-bridge2.0-0 libatk1.0-0 \
-    libxcb-dri3-0 libxss1 libasound2 libxtst6 \
-    nodejs npm \
-    && rm -rf /var/lib/apt/lists/*
+# 🔹 Instalar Node.js antes de npm
+RUN apt-get update && apt-get install -y curl && \
+    curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
+    apt-get install -y nodejs
 
 # 🔹 Instalar Playwright con npm (NO con dotnet)
 RUN npm install -g playwright && playwright install-deps && playwright install
 
 # 🔹 Copiamos los archivos compilados
 COPY --from=build /app/publish .
+
+# Comando de inicio
+ENTRYPOINT ["dotnet", "DescuentosWeb.dll"]
