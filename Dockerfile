@@ -35,4 +35,4 @@ RUN apt-get update && apt-get install -y \
 RUN npm install -g playwright && playwright install-deps && playwright install
 
 # 🔹 Copiamos los archivos compilados
-COPY --from=build /
+COPY --from=build /app/publish .
