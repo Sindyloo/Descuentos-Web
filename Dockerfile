@@ -27,8 +27,10 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y curl && \
     curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
     apt-get install -y nodejs && \
-    npm install -g playwright && \
-    npx playwright install --with-deps
+    npm install -g playwright 
+
+# ⚠️ Instalar Playwright y sus navegadores para .NET
+RUN pwsh -Command "npx playwright install --with-deps"
 
 # Copiar archivos compilados
 COPY --from=build /app/publish .
