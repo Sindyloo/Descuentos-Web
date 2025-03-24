@@ -30,7 +30,7 @@ RUN apt-get update && apt-get install -y curl && \
     npm install -g playwright 
 
 # ⚠️ Instalar Playwright y sus navegadores para .NET
-RUN npx playwright install --with-deps
+RUN npx playwright install chromium --with-deps
 
 # Copiar archivos compilados
 COPY --from=build /app/publish .
