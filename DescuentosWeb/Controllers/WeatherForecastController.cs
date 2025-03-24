@@ -16,7 +16,6 @@ namespace DescuentosWeb.Controllers
         {
             var products = new List<Product>();
             int maxPages = 100;
-
             try
             {
                 // Inicializa Playwright y abre un navegador
