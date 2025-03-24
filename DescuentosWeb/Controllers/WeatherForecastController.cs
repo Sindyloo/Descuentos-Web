@@ -22,7 +22,18 @@ namespace DescuentosWeb.Controllers
                 // Inicializa Playwright y abre un navegador
                 using (var playwright = await Playwright.CreateAsync())
                 {
-                    var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true });
+                    var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
+                    {
+                        Headless = true,
+                        Args = new[]
+                        {
+                            "--no-sandbox",
+                            "--disable-setuid-sandbox",
+                            "--disable-gpu",
+                            "--disable-dev-shm-usage",
+                            "--disable-software-rasterizer"
+                        }
+                    });
                     var page = await browser.NewPageAsync();
 
                     for (int currentPage = 1; currentPage <= maxPages; currentPage++)
