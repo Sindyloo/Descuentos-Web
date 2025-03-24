@@ -20,7 +20,9 @@ namespace DescuentosWeb
             Host.CreateDefaultBuilder(args)
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
-                    webBuilder.UseStartup<Startup>();
+                    var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
+                    webBuilder.UseStartup<Startup>()
+                              .UseUrls($"http://*:{port}");
                 });
     }
 }
