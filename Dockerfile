@@ -1,8 +1,10 @@
 # Imagen base con .NET 6.0
 FROM mcr.microsoft.com/dotnet/aspnet:6.0 AS base
 WORKDIR /app
-EXPOSE 80
-EXPOSE 443
+
+# ⚠️ Railway usa el puerto 8080 por defecto
+ENV PORT=8080
+EXPOSE 8080
 
 # Imagen de construcción con SDK de .NET 6.0
 FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
@@ -21,7 +23,7 @@ RUN dotnet publish "DescuentosWeb.csproj" -c Release -o /app/publish --no-restor
 FROM base AS final
 WORKDIR /app
 
-# Instalar Node.js y Playwright
+# ⚠️ Instalar Node.js, npm y Playwright con dependencias necesarias
 RUN apt-get update && apt-get install -y curl && \
     curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
     apt-get install -y nodejs && \
