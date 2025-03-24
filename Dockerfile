@@ -3,8 +3,8 @@ FROM mcr.microsoft.com/dotnet/aspnet:6.0 AS base
 WORKDIR /app
 
 # ⚠️ Railway usa el puerto 8080 por defecto
-ENV PORT=8080
-EXPOSE 8080
+ENV PORT=3000
+EXPOSE 3000
 
 # Imagen de construcción con SDK de .NET 6.0
 FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
